@@ -17,13 +17,15 @@ var LIBRARY_OBJECT = (function() {
     /************************************************************************
      *                      MODULE LEVEL / GLOBAL VARIABLES
      *************************************************************************/
-    var cbar,
+    var animationDelay,
+        cbar,
         $btnUpload,
         $get_ts,
         layers,
         map,
         $modalUpload,
         slider_max,
+        sliderInterval,
         shpSource,
         shpLayer,
         var_info,
@@ -34,6 +36,7 @@ var LIBRARY_OBJECT = (function() {
      *************************************************************************/
     var addDefaultBehaviorToAjax,
         add_wms,
+        animate,
         cbar_str,
         checkCsrfSafe,
         clear_coords,
@@ -61,7 +64,46 @@ var LIBRARY_OBJECT = (function() {
         $get_ts = $("#get-ts");
         $modalUpload = $("#modalUpload");
         $btnUpload = $("#btn-add-shp");
+        animationDelay  = 1000;
+        sliderInterval = {};
     };
+
+    animate = function(){
+        var sliderVal = $("#slider").slider("value");
+
+        sliderInterval = setInterval(function() {
+            sliderVal += 1;
+            $("#slider").slider("value", sliderVal);
+            if (sliderVal===slider_max - 1) sliderVal=0;
+        }, animationDelay);
+    };
+
+    $(".btn-run").on("click", animate);
+    //Set the slider value to the current value to start the animation at the );
+    $(".btn-stop").on("click", function() {
+        //Call clearInterval to stop the animation.
+        clearInterval(sliderInterval);
+    });
+
+    $(".btn-increase").on("click", function() {
+        clearInterval(sliderInterval);
+
+        if(animationDelay > 250){
+
+            animationDelay = animationDelay - 250;
+            $("#speed").val((1/(animationDelay/1000)).toFixed(2));
+            animate();
+        }
+
+    });
+
+    $(".btn-decrease").on("click", function() {
+        clearInterval(sliderInterval);
+        animationDelay = animationDelay + 250;
+        $("#speed").val((1/(animationDelay/1000)).toFixed(2));
+        animate();
+    });
+
 
     gen_color_bar = function(){
         var cv  = document.getElementById('cv'),
@@ -581,6 +623,9 @@ var LIBRARY_OBJECT = (function() {
         init_slider();
         gen_color_bar();
 
+        $("#speed").val((1/(animationDelay/1000)).toFixed(2));
+
+
         $("#date-select").change(function(){
             add_wms();
             var selected_option = $(this).find('option:selected').index();
@@ -588,6 +633,7 @@ var LIBRARY_OBJECT = (function() {
         }).change();
 
         $("#vars").change(function(){
+            clearInterval(sliderInterval);
             update_color_bar();
             var val = $("#slider").slider("value");
             var date_value = $("#date-select option")[val].value;
