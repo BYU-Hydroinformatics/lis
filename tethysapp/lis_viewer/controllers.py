@@ -44,6 +44,13 @@ def home(request):
     return render(request, 'lis_viewer/home.html', context)
 
 @login_required()
+def api(request):
+
+    context = {'host': 'http://%s' % request.get_host()}
+
+    return render(request, 'lis_viewer/api.html', context)
+
+@login_required()
 def get_ts(request):
 
     return_obj = {}
