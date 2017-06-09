@@ -19,11 +19,14 @@ var LIBRARY_OBJECT = (function() {
      *************************************************************************/
     var animationDelay,
         cbar,
+        current_layer,
         $btnUpload,
+        element,
         $get_ts,
         layers,
         map,
         $modalUpload,
+        popup,
         slider_max,
         sliderInterval,
         shpSource,
@@ -163,6 +166,60 @@ var LIBRARY_OBJECT = (function() {
 
             observer.observe(target, config);
         }());
+
+          map.on("singleclick",function(evt){
+
+            $(element).popover('destroy');
+
+
+            if (map.getTargetElement().style.cursor == "pointer" && $("#types").find('option:selected').val()=="None") {
+                var clickCoord = evt.coordinate;
+                popup.setPosition(clickCoord);
+                var view = map.getView();
+                var viewResolution = view.getResolution();
+
+                var wms_url = current_layer.getSource().getGetFeatureInfoUrl(evt.coordinate, viewResolution, view.getProjection(), {'INFO_FORMAT': 'application/json'}); //Get the wms url for the clicked point
+                if (wms_url) {
+                    //Retrieving the details for clicked point via the url
+                    $.ajax({
+                        type: "GET",
+                        url: wms_url,
+                        dataType: 'json',
+                        success: function (result) {
+                            var value = parseFloat(result["features"][0]["properties"]["GRAY_INDEX"]);
+                            value = value.toFixed(2);
+                            $(element).popover({
+                                'placement': 'top',
+                                'html': true,
+                                //Dynamically Generating the popup content
+                                'content':'Value: '+value
+                            });
+
+                            $(element).popover('show');
+                            $(element).next().css('cursor', 'text');
+
+
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            console.log(Error);
+                        }
+                    });
+                }
+            }
+        });
+
+        map.on('pointermove', function(evt) {
+            if (evt.dragging) {
+                return;
+            }
+            var pixel = map.getEventPixel(evt.originalEvent);
+            var hit = map.forEachLayerAtPixel(pixel, function(layer) {
+                if (layer != layers[0]&& layer != layers[1] && layer != layers[2] && layer != layers[4]){
+                    current_layer = layer;
+                    return true;}
+            });
+            map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+        });
     };
 
     //This function is critical as it will ensure that only one of three inputs has value
@@ -217,7 +274,12 @@ var LIBRARY_OBJECT = (function() {
             projection: projection,
             zoom: 3
         });
-        layers = [baseLayer,vector_layer];
+        wms_source = new ol.source.ImageWMS();
+
+        wms_layer = new ol.layer.Image({
+            source: wms_source
+        });
+        layers = [baseLayer,vector_layer,shpLayer,wms_layer];
         map = new ol.Map({
             target: document.getElementById("map"),
             layers: layers,
@@ -226,6 +288,15 @@ var LIBRARY_OBJECT = (function() {
         map.addControl(new ol.control.ZoomSlider());
         map.addControl(fullScreenControl);
         map.crossOrigin = 'anonymous';
+        element = document.getElementById('popup');
+
+        popup = new ol.Overlay({
+            element: element,
+            positioning: 'bottom-center',
+            stopEvent: true
+        });
+
+        map.addOverlay(popup);
 
         //Code for adding interaction for drawing on the map
         var lastFeature, draw, featureType;
