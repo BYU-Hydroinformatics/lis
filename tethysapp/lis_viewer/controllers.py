@@ -15,11 +15,11 @@ def home(request):
     Controller for the app home page.
     """
     # for file in os.listdir('/home/tethys/lis_new/'):
-    #      create_lis_geotiff('/home/tethys/lis_new/'+file, 'rainfall')
+    #      create_lis_geotiff('/home/tethys/lis_new/'+file, 'total_precip')
     # upload_tiff('/home/tethys/geotiff_test/', 'http://tethys.byu.edu:8181/geoserver/rest','lis')
 
-    display_vars = {'Qs':'Runoff','rainfall':'Rainfall'}
-
+    display_vars = {'Qs':'Runoff','rainfall':'Rainfall','total_precip':'Total Precip'}
+    # 'total_precip':'Total Rain'
     var_metadata,cbar = get_range(LIS_DIRECTORY, display_vars,20)
 
     var_metadata = json.dumps(var_metadata)

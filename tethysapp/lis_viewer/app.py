@@ -29,7 +29,7 @@ class LisObservationsExplorer(TethysAppBase):
                            controller='lis_viewer.controllers.home'),
                     UrlMap(name='api',
                            url='lis-viewer/api',
-                           controller='lis_viewer.controllers.api'),
+                           controller='lis_viewer.controllers.api'), #API Documentation
                     UrlMap(name='get-ts',
                            url='lis-viewer/get-ts',
                            controller='lis_viewer.controllers.get_ts'),
